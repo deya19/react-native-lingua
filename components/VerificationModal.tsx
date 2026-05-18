@@ -1,61 +1,86 @@
 import { router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 type Props = {
   visible: boolean;
   email: string;
   onClose: () => void;
-  onSuccess?: () => void;
+  onVerify: (code: string) => Promise<boolean>;
+  onResend: () => Promise<void>;
 };
 
 export default function VerificationModal({
   visible,
   email,
   onClose,
-  onSuccess,
+  onVerify,
+  onResend,
 }: Props) {
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [error, setError] = useState("");
+  const [resendCooldown, setResendCooldown] = useState(0);
   const inputs = useRef<(TextInput | null)[]>([]);
 
   useEffect(() => {
     if (visible) {
       setCode(["", "", "", "", "", ""]);
       setIsSuccess(false);
+      setIsVerifying(false);
+      setIsResending(false);
+      setError("");
+      setResendCooldown(0);
       setTimeout(() => inputs.current[0]?.focus(), 200);
     }
   }, [visible]);
 
-  function handleChange(text: string, index: number) {
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      const timer = setTimeout(() => setResendCooldown((c) => c - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendCooldown]);
+
+  async function handleChange(text: string, index: number) {
+    if (isVerifying) return;
     const digit = text.replace(/[^0-9]/g, "").slice(-1);
     const next = [...code];
     next[index] = digit;
     setCode(next);
+    setError("");
 
     if (digit && index < 5) {
       inputs.current[index + 1]?.focus();
     }
 
     if (next.every((d) => d !== "") && digit) {
-      setIsSuccess(true);
-      setTimeout(() => {
-        onClose();
-        if (onSuccess) {
-          onSuccess();
-        } else {
+      const fullCode = next.join("");
+      setIsVerifying(true);
+      const ok = await onVerify(fullCode);
+      setIsVerifying(false);
+      if (ok) {
+        setIsSuccess(true);
+        setTimeout(() => {
+          onClose();
           router.replace("/");
-        }
-      }, 1000);
+        }, 1000);
+      } else {
+        setCode(["", "", "", "", "", ""]);
+        setError("Invalid code. Please try again.");
+        setTimeout(() => inputs.current[0]?.focus(), 100);
+      }
     }
   }
 
@@ -121,18 +146,43 @@ export default function VerificationModal({
               ))}
             </View>
 
+            {error ? (
+              <Text className="text-[12px] font-[Poppins-Medium] text-error text-center mb-4">
+                {error}
+              </Text>
+            ) : null}
+
             {/* Resend link */}
             <View className="flex-row justify-center mb-8">
               <Text className="body-medium text-text-secondary">
                 Didn&apos;t receive it?{" "}
               </Text>
-              <TouchableOpacity
-                onPress={() => setCode(["", "", "", "", "", ""])}
-              >
-                <Text className="body-medium text-lingua-purple font-[Poppins-SemiBold]">
-                  Resend
+              {resendCooldown > 0 ? (
+                <Text className="body-medium text-text-secondary font-[Poppins-SemiBold]">
+                  Resend in {resendCooldown}s
                 </Text>
-              </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  disabled={isResending}
+                  onPress={async () => {
+                    setIsResending(true);
+                    setCode(["", "", "", "", "", ""]);
+                    setError("");
+                    try {
+                      await onResend();
+                      setResendCooldown(60);
+                    } catch {
+                      setError("Failed to resend code. Please try again.");
+                    } finally {
+                      setIsResending(false);
+                    }
+                  }}
+                >
+                  <Text className="body-medium text-lingua-purple font-[Poppins-SemiBold]">
+                    {isResending ? "Sending..." : "Resend"}
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
 
             {!isSuccess && (

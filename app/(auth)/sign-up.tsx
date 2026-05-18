@@ -1,6 +1,9 @@
 import SocialButton from "@/components/SocialButton";
 import VerificationModal from "@/components/VerificationModal";
 import { images } from "@/constants/images";
+import { useSignUp, useSSO } from "@clerk/expo";
+import * as Linking from "expo-linking";
+import type { Href } from "expo-router";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
@@ -15,20 +18,137 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function SignUpScreen() {
+  const { signUp, fetchStatus } = useSignUp();
+  const { startSSOFlow } = useSSO();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [facebookLoading, setFacebookLoading] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
   const [errors, setErrors] = useState({ email: "", password: "" });
 
-  function handleSignUp() {
+  async function handleSignUp() {
     const next = { email: "", password: "" };
     if (!email) next.email = "Email is required.";
     if (password.length < 8)
       next.password = "Password must be at least 8 characters.";
     setErrors(next);
     if (next.email || next.password) return;
+
+    const { error } = await signUp!.password({ emailAddress: email, password });
+    if (error) {
+      setErrors({
+        email: error.message ?? "",
+        password: "",
+      });
+      return;
+    }
+
+    const sendResult = await signUp!.verifications.sendEmailCode();
+    if (sendResult.error) {
+      setErrors({
+        email: sendResult.error.message ?? "",
+        password: "",
+      });
+      return;
+    }
+
     setModalVisible(true);
+  }
+
+  async function handleVerify(code: string) {
+    const { error } = await signUp!.verifications.verifyEmailCode({ code });
+    if (error) return false;
+
+    if (signUp!.status === "complete") {
+      await signUp!.finalize({
+        navigate: ({ session, decorateUrl }) => {
+          if (session?.currentTask) {
+            console.log(session.currentTask);
+            return;
+          }
+          const url = decorateUrl("/");
+          router.replace(url as Href);
+        },
+      });
+    }
+    return true;
+  }
+
+  async function handleResend() {
+    const { error } = await signUp!.verifications.sendEmailCode();
+    if (error) throw new Error(error.message ?? "Failed to resend code");
+  }
+
+  async function handleGoogle() {
+    if (googleLoading) return;
+    setGoogleLoading(true);
+    try {
+      const redirectUrl = Linking.createURL("oauth-callback");
+      console.log("[Google SSO] redirectUrl:", redirectUrl);
+      const { createdSessionId, setActive: setSSOSession } = await startSSOFlow(
+        {
+          strategy: "oauth_google",
+          redirectUrl,
+        },
+      );
+      console.log("[Google SSO] createdSessionId:", createdSessionId);
+      if (createdSessionId) {
+        await setSSOSession!({ session: createdSessionId });
+        router.replace("/");
+      }
+    } catch (err) {
+      console.error("Google sign-up error:", err);
+    } finally {
+      setGoogleLoading(false);
+    }
+  }
+
+  async function handleFacebook() {
+    if (facebookLoading) return;
+    setFacebookLoading(true);
+    try {
+      const redirectUrl = Linking.createURL("oauth-callback");
+      const { createdSessionId, setActive: setSSOSession } = await startSSOFlow(
+        {
+          strategy: "oauth_facebook",
+          redirectUrl,
+        },
+      );
+      if (createdSessionId) {
+        await setSSOSession!({ session: createdSessionId });
+        router.replace("/");
+      }
+    } catch (err) {
+      console.error("Facebook sign-up error:", err);
+    } finally {
+      setFacebookLoading(false);
+    }
+  }
+
+  async function handleApple() {
+    if (appleLoading) return;
+    setAppleLoading(true);
+    try {
+      const redirectUrl = Linking.createURL("oauth-callback");
+      const { createdSessionId, setActive: setSSOSession } = await startSSOFlow(
+        {
+          strategy: "oauth_apple",
+          redirectUrl,
+        },
+      );
+      if (createdSessionId) {
+        await setSSOSession!({ session: createdSessionId });
+        router.replace("/");
+      }
+    } catch (err) {
+      console.error("Apple sign-up error:", err);
+    } finally {
+      setAppleLoading(false);
+    }
   }
 
   return (
@@ -120,7 +240,7 @@ export default function SignUpScreen() {
             onPress={handleSignUp}
           >
             <Text className="text-[17px] font-[Poppins-SemiBold] text-white">
-              Sign Up
+              {fetchStatus === "fetching" ? "Signing up..." : "Sign Up"}
             </Text>
           </TouchableOpacity>
 
@@ -139,16 +259,19 @@ export default function SignUpScreen() {
               icon="G"
               iconColor="#ea4335"
               label="Continue with Google"
+              onPress={handleGoogle}
             />
             <SocialButton
               icon="f"
               iconColor="#1877f2"
               label="Continue with Facebook"
+              onPress={handleFacebook}
             />
             <SocialButton
               icon="⌘"
               iconColor="#000000"
               label="Continue with Apple"
+              onPress={handleApple}
             />
           </View>
 
@@ -170,6 +293,8 @@ export default function SignUpScreen() {
         visible={modalVisible}
         email={email}
         onClose={() => setModalVisible(false)}
+        onVerify={handleVerify}
+        onResend={handleResend}
       />
     </SafeAreaView>
   );

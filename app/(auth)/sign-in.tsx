@@ -1,6 +1,9 @@
 import SocialButton from "@/components/SocialButton";
 import VerificationModal from "@/components/VerificationModal";
 import { images } from "@/constants/images";
+import { useSSO } from "@clerk/expo";
+import { useSignIn } from "@clerk/expo/legacy";
+import * as Linking from "expo-linking";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
@@ -15,12 +18,138 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function SignInScreen() {
+  const { signIn, isLoaded, setActive } = useSignIn();
+  const { startSSOFlow } = useSSO();
+
   const [email, setEmail] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [facebookLoading, setFacebookLoading] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
+  const [emailError, setEmailError] = useState("");
 
-  function handleSignIn() {
-    if (!email) return;
-    setModalVisible(true);
+  async function handleSignIn() {
+    if (!email) {
+      setEmailError("Email is required.");
+      return;
+    }
+    setEmailError("");
+    if (!isLoaded) return;
+
+    setLoading(true);
+    try {
+      await signIn!.create({ identifier: email });
+      await signIn!.prepareFirstFactor({
+        strategy: "email_code",
+        emailAddressId: signIn!.supportedFirstFactors!.find(
+          (f) => f.strategy === "email_code",
+        )!.emailAddressId!,
+      });
+      setModalVisible(true);
+    } catch (err: any) {
+      setEmailError(err?.errors?.[0]?.message ?? "Something went wrong.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleVerify(code: string) {
+    if (!isLoaded) return false;
+    try {
+      const result = await signIn!.attemptFirstFactor({
+        strategy: "email_code",
+        code,
+      });
+      if (result.status === "complete") {
+        await setActive!({ session: result.createdSessionId });
+        router.replace("/");
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }
+
+  async function handleResend() {
+    if (!isLoaded) return;
+    const factor = signIn!.supportedFirstFactors!.find(
+      (f) => f.strategy === "email_code",
+    );
+    if (!factor) return;
+    await signIn!.prepareFirstFactor({
+      strategy: "email_code",
+      emailAddressId: factor.emailAddressId!,
+    });
+  }
+
+  async function handleGoogle() {
+    if (googleLoading) return;
+    setGoogleLoading(true);
+    try {
+      const redirectUrl = Linking.createURL("oauth-callback");
+      console.log("[Google SSO] redirectUrl:", redirectUrl);
+      const { createdSessionId, setActive: setSSOSession } = await startSSOFlow(
+        {
+          strategy: "oauth_google",
+          redirectUrl,
+        },
+      );
+      console.log("[Google SSO] createdSessionId:", createdSessionId);
+      if (createdSessionId) {
+        await setSSOSession!({ session: createdSessionId });
+        router.replace("/");
+      }
+    } catch (err) {
+      console.error("Google sign-in error:", err);
+    } finally {
+      setGoogleLoading(false);
+    }
+  }
+
+  async function handleFacebook() {
+    if (facebookLoading) return;
+    setFacebookLoading(true);
+    try {
+      const redirectUrl = Linking.createURL("oauth-callback");
+      const { createdSessionId, setActive: setSSOSession } = await startSSOFlow(
+        {
+          strategy: "oauth_facebook",
+          redirectUrl,
+        },
+      );
+      if (createdSessionId) {
+        await setSSOSession!({ session: createdSessionId });
+        router.replace("/");
+      }
+    } catch (err) {
+      console.error("Facebook sign-in error:", err);
+    } finally {
+      setFacebookLoading(false);
+    }
+  }
+
+  async function handleApple() {
+    if (appleLoading) return;
+    setAppleLoading(true);
+    try {
+      const redirectUrl = Linking.createURL("oauth-callback");
+      const { createdSessionId, setActive: setSSOSession } = await startSSOFlow(
+        {
+          strategy: "oauth_apple",
+          redirectUrl,
+        },
+      );
+      if (createdSessionId) {
+        await setSSOSession!({ session: createdSessionId });
+        router.replace("/");
+      }
+    } catch (err) {
+      console.error("Apple sign-in error:", err);
+    } finally {
+      setAppleLoading(false);
+    }
   }
 
   return (
@@ -69,6 +198,11 @@ export default function SignInScreen() {
               style={styles.input}
             />
           </View>
+          {emailError ? (
+            <Text className="text-[12px] font-[Poppins-Medium] text-error mt-1 ml-1">
+              {emailError}
+            </Text>
+          ) : null}
 
           {/* Sign In button */}
           <TouchableOpacity
@@ -77,7 +211,7 @@ export default function SignInScreen() {
             onPress={handleSignIn}
           >
             <Text className="text-[17px] font-[Poppins-SemiBold] text-white">
-              Log In
+              {loading ? "Sending code..." : "Log In"}
             </Text>
           </TouchableOpacity>
 
@@ -96,16 +230,19 @@ export default function SignInScreen() {
               icon="G"
               iconColor="#ea4335"
               label="Continue with Google"
+              onPress={handleGoogle}
             />
             <SocialButton
               icon="f"
               iconColor="#1877f2"
               label="Continue with Facebook"
+              onPress={handleFacebook}
             />
             <SocialButton
               icon="⌘"
               iconColor="#000000"
               label="Continue with Apple"
+              onPress={handleApple}
             />
           </View>
 
@@ -127,6 +264,8 @@ export default function SignInScreen() {
         visible={modalVisible}
         email={email}
         onClose={() => setModalVisible(false)}
+        onVerify={handleVerify}
+        onResend={handleResend}
       />
     </SafeAreaView>
   );
@@ -148,5 +287,8 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: "#0d132b",
     padding: 0,
+  },
+  eyeBtn: {
+    paddingLeft: 8,
   },
 });
