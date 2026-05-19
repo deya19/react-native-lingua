@@ -1,5 +1,5 @@
 import { useClerk, useUser } from "@clerk/expo";
-import { Redirect } from "expo-router";
+import { Redirect, router } from "expo-router";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -21,11 +21,20 @@ export default function HomeScreen() {
           {user.emailAddresses[0]?.emailAddress ?? user.id}
         </Text>
         <TouchableOpacity
-          className="bg-lingua-purple px-8 py-4 rounded-[14px]"
+          className="bg-lingua-purple px-8 py-4 rounded-[14px] mb-4"
+          activeOpacity={0.85}
+          onPress={() => router.push("/language-selection")}
+        >
+          <Text className="text-[16px] font-[Poppins-SemiBold] text-white">
+            Choose Language
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          className="px-8 py-4 rounded-[14px] border border-border"
           activeOpacity={0.85}
           onPress={() => signOut()}
         >
-          <Text className="text-[16px] font-[Poppins-SemiBold] text-white">
+          <Text className="text-[16px] font-[Poppins-SemiBold] text-text-primary">
             Sign Out
           </Text>
         </TouchableOpacity>
