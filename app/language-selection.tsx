@@ -39,7 +39,7 @@ export default function LanguageSelectionScreen() {
               className="w-10 h-10 items-center justify-center"
               onPress={() => router.back()}
             >
-              <Text className="text-[24px] text-text-primary">{"<"}</Text>
+              <Text className="text-heading-2 text-text-primary">{"<"}</Text>
             </TouchableOpacity>
             <View className="flex-1 items-center mr-10">
               <Text className="text-[18px] font-[Poppins-SemiBold] text-text-primary">
@@ -64,7 +64,7 @@ export default function LanguageSelectionScreen() {
 
           {/* Popular label */}
           <View className="px-6 mb-2">
-            <Text className="text-[14px] font-[Poppins-SemiBold] text-text-secondary">
+            <Text className="text-body-medium font-[Poppins-SemiBold] text-text-secondary">
               Popular
             </Text>
           </View>
@@ -89,7 +89,7 @@ export default function LanguageSelectionScreen() {
                       className="w-12 h-12 rounded-full items-center justify-center mr-4"
                       style={{ backgroundColor: lang.color + "20" }}
                     >
-                      <Text className="text-[24px]">{lang.flag}</Text>
+                      <Text className="text-heading-2">{lang.flag}</Text>
                     </View>
 
                     {/* Name & learners */}
@@ -97,7 +97,7 @@ export default function LanguageSelectionScreen() {
                       <Text className="text-[16px] font-[Poppins-SemiBold] text-text-primary">
                         {lang.name}
                       </Text>
-                      <Text className="text-[13px] font-[Poppins-Regular] text-text-secondary">
+                      <Text className="text-body-small font-[Poppins-Regular]">
                         {lang.learners}
                       </Text>
                     </View>
@@ -105,7 +105,7 @@ export default function LanguageSelectionScreen() {
                     {/* Checkmark or chevron */}
                     {isSelected ? (
                       <View className="w-7 h-7 rounded-full bg-lingua-purple items-center justify-center">
-                        <Text className="text-white text-[14px] font-[Poppins-Bold]">
+                        <Text className="text-white text-body-medium font-[Poppins-Bold]">
                           ✓
                         </Text>
                       </View>
@@ -114,7 +114,7 @@ export default function LanguageSelectionScreen() {
                     )}
                   </TouchableOpacity>
                   {index < filtered.length - 1 && (
-                    <View className="h-[1px] bg-border mx-4" />
+                    <View className="h-px bg-border mx-4" />
                   )}
                 </View>
               );
