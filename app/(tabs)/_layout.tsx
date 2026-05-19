@@ -1,11 +1,10 @@
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import {
     Animated,
     Dimensions,
     StyleSheet,
-    Text,
     TouchableOpacity,
     View,
 } from "react-native";
@@ -15,8 +14,8 @@ const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const TAB_COUNT = 5;
 const TAB_WIDTH = SCREEN_WIDTH / TAB_COUNT;
 
-const PURPLE = "#5b21b6";
-const GRAY = "#9ca3af";
+const PURPLE = "#6C4EF5";
+const GRAY = "#7E86A4";
 
 type TabConfig = {
   name: string;
@@ -62,11 +61,79 @@ const tabConfigs: TabConfig[] = [
   },
 ];
 
+function TabButton({
+  isFocused,
+  onPress,
+  color,
+  labelColor,
+  tab,
+  accessibilityState,
+  accessibilityLabel,
+}: {
+  isFocused: boolean;
+  onPress: () => void;
+  color: string;
+  labelColor: string;
+  tab: TabConfig;
+  accessibilityState: { selected: boolean } | object;
+  accessibilityLabel?: string;
+}) {
+  const opacity = useRef(new Animated.Value(isFocused ? 0 : 1)).current;
+  const scale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.timing(opacity, {
+      toValue: isFocused ? 0 : 1,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  }, [isFocused, opacity]);
+
+  const handlePress = () => {
+    Animated.sequence([
+      Animated.spring(scale, {
+        toValue: 0.72,
+        useNativeDriver: true,
+        speed: 50,
+        bounciness: 4,
+      }),
+      Animated.spring(scale, {
+        toValue: 1,
+        useNativeDriver: true,
+        speed: 18,
+        bounciness: 14,
+      }),
+    ]).start();
+    onPress();
+  };
+
+  return (
+    <TouchableOpacity
+      accessibilityRole="button"
+      accessibilityState={accessibilityState}
+      accessibilityLabel={accessibilityLabel}
+      onPress={handlePress}
+      style={styles.tab}
+      activeOpacity={1}
+    >
+      <Animated.View style={[styles.iconWrapper, { transform: [{ scale }] }]}>
+        {tab.icon(color, 22)}
+      </Animated.View>
+      <Animated.Text style={[styles.label, { color: labelColor, opacity }]}>
+        {tab.label}
+      </Animated.Text>
+    </TouchableOpacity>
+  );
+}
+
 function CustomTabBar({ state, descriptors, navigation }: any) {
   const insets = useSafeAreaInsets();
   const animatedIndex = useRef(new Animated.Value(state.index)).current;
+  const debounceRef = useRef(false);
 
   const onTabPress = (index: number, route: any, isFocused: boolean) => {
+    if (debounceRef.current) return;
+
     const event = navigation.emit({
       type: "tabPress",
       target: route.key,
@@ -74,12 +141,16 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
     });
 
     if (!isFocused && !event.defaultPrevented) {
+      debounceRef.current = true;
       Animated.timing(animatedIndex, {
         toValue: index,
         duration: 200,
         useNativeDriver: true,
       }).start();
       navigation.navigate(route.name);
+      setTimeout(() => {
+        debounceRef.current = false;
+      }, 300);
     }
   };
 
@@ -89,7 +160,7 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
   });
 
   return (
-    <View style={[styles.container, { paddingBottom: insets.bottom || 8 }]}>
+    <View style={[styles.container, { paddingBottom: insets.bottom || 10 }]}>
       <Animated.View
         style={[
           styles.activeCircle,
@@ -106,22 +177,16 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
         const labelColor = isFocused ? PURPLE : GRAY;
 
         return (
-          <TouchableOpacity
+          <TabButton
             key={route.key}
-            accessibilityRole="button"
+            isFocused={isFocused}
+            onPress={() => onTabPress(index, route, isFocused)}
+            color={color}
+            labelColor={labelColor}
+            tab={tab}
             accessibilityState={isFocused ? { selected: true } : {}}
             accessibilityLabel={options.tabBarAccessibilityLabel}
-            onPress={() => onTabPress(index, route, isFocused)}
-            style={styles.tab}
-            activeOpacity={0.8}
-          >
-            <View style={styles.iconWrapper}>{tab.icon(color, 22)}</View>
-            {!isFocused && (
-              <Text style={[styles.label, { color: labelColor }]}>
-                {tab.label}
-              </Text>
-            )}
-          </TouchableOpacity>
+          />
         );
       })}
     </View>
@@ -149,35 +214,41 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     backgroundColor: "#ffffff",
-    borderTopWidth: 1,
-    borderTopColor: "#f3f4f6",
-    paddingTop: 8,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingTop: 12,
+    shadowColor: "#D4D9EA",
+    shadowOffset: { width: 0, height: -8 },
+    shadowOpacity: 0.28,
+    shadowRadius: 18,
+    elevation: 18,
   },
   tab: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    height: 56,
-    zIndex: 1,
-  },
-  iconWrapper: {
-    width: 48,
-    height: 32,
-    alignItems: "center",
-    justifyContent: "center",
+    height: 58,
   },
   activeCircle: {
     position: "absolute",
-    top: 12,
+    top: 8,
     width: 48,
     height: 48,
     borderRadius: 24,
     backgroundColor: PURPLE,
     zIndex: 0,
   },
+  iconWrapper: {
+    width: 48,
+    height: 32,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1,
+  },
   label: {
     fontSize: 11,
-    fontFamily: "Poppins-Medium",
-    marginTop: 0,
+    fontFamily: "Poppins-SemiBold",
+    marginTop: 1,
+    zIndex: 1,
   },
 });

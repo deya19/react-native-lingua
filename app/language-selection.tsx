@@ -91,7 +91,10 @@ export default function LanguageSelectionScreen() {
                       className="w-12 h-12 rounded-full items-center justify-center mr-4"
                       style={{ backgroundColor: lang.color + "20" }}
                     >
-                      <Text className="text-heading-2">{lang.flag}</Text>
+                      <Image
+                        source={{ uri: lang.flag }}
+                        className="h-12 w-12 rounded-full"
+                      />
                     </View>
 
                     {/* Name & learners */}

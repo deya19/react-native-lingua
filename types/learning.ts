@@ -7,6 +7,7 @@ export interface Language {
   flag: string;
   color: string;
   learners: string;
+  greeting: string;
 }
 
 export type ActivityType =
