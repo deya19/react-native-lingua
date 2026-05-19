@@ -1,0 +1,58 @@
+import type { Unit } from "@/types/learning";
+
+export const units: Unit[] = [
+  {
+    id: "unit-en-1",
+    languageCode: "en",
+    title: "Basics 1",
+    description: "Learn common greetings and introductions",
+    order: 1,
+    color: "#58CC02",
+    lessons: [],
+  },
+  {
+    id: "unit-en-2",
+    languageCode: "en",
+    title: "Basics 2",
+    description: "Build simple sentences and ask questions",
+    order: 2,
+    color: "#1CB0F6",
+    lessons: [],
+  },
+  {
+    id: "unit-es-1",
+    languageCode: "es",
+    title: "Saludos",
+    description: "Learn Spanish greetings and basic phrases",
+    order: 1,
+    color: "#FF9600",
+    lessons: [],
+  },
+  {
+    id: "unit-fr-1",
+    languageCode: "fr",
+    title: "Bonjour",
+    description: "Start with French greetings and introductions",
+    order: 1,
+    color: "#854DAD",
+    lessons: [],
+  },
+  {
+    id: "unit-de-1",
+    languageCode: "de",
+    title: "Hallo",
+    description: "German basics: greetings and simple words",
+    order: 1,
+    color: "#FF4B4B",
+    lessons: [],
+  },
+  {
+    id: "unit-ja-1",
+    languageCode: "ja",
+    title: "Konnichiwa",
+    description: "Japanese greetings and hiragana basics",
+    order: 1,
+    color: "#FF7FB0",
+    lessons: [],
+  },
+];
