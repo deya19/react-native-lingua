@@ -26,28 +26,12 @@ export const languages: Language[] = [
     learners: "12.7M learners",
   },
   {
-    code: "ko",
-    name: "Korean",
-    nativeName: "\uD55C\uAD6D\uC5B4",
-    flag: "\uD83C\uDDF0\uD83C\uDDF7",
-    color: "#4D8BFF",
-    learners: "9.3M learners",
-  },
-  {
     code: "de",
     name: "German",
     nativeName: "Deutsch",
     flag: "\uD83C\uDDE9\uD83C\uDDEA",
     color: "#FF4B4B",
     learners: "8.1M learners",
-  },
-  {
-    code: "zh",
-    name: "Chinese",
-    nativeName: "\u4E2D\u6587",
-    flag: "\uD83C\uDDE8\uD83C\uDDF3",
-    color: "#E74C3C",
-    learners: "7.4M learners",
   },
   {
     code: "en",
