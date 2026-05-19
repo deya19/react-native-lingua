@@ -68,18 +68,25 @@ export default function VerificationModal({
     if (next.every((d) => d !== "") && digit) {
       const fullCode = next.join("");
       setIsVerifying(true);
-      const ok = await onVerify(fullCode);
-      setIsVerifying(false);
-      if (ok) {
-        setIsSuccess(true);
-        setTimeout(() => {
-          onClose();
-          router.replace("/");
-        }, 1000);
-      } else {
+      try {
+        const ok = await onVerify(fullCode);
+        if (ok) {
+          setIsSuccess(true);
+          setTimeout(() => {
+            onClose();
+            router.replace("/");
+          }, 1000);
+        } else {
+          setCode(["", "", "", "", "", ""]);
+          setError("Invalid code. Please try again.");
+          setTimeout(() => inputs.current[0]?.focus(), 100);
+        }
+      } catch {
         setCode(["", "", "", "", "", ""]);
         setError("Invalid code. Please try again.");
         setTimeout(() => inputs.current[0]?.focus(), 100);
+      } finally {
+        setIsVerifying(false);
       }
     }
   }

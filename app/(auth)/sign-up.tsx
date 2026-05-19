@@ -37,8 +37,15 @@ export default function SignUpScreen() {
       next.password = "Password must be at least 8 characters.";
     setErrors(next);
     if (next.email || next.password) return;
+    if (!signUp) {
+      setErrors({
+        email: "Authentication not ready. Please try again.",
+        password: "",
+      });
+      return;
+    }
 
-    const { error } = await signUp!.password({ emailAddress: email, password });
+    const { error } = await signUp.password({ emailAddress: email, password });
     if (error) {
       setErrors({
         email: error.message ?? "",
@@ -47,7 +54,7 @@ export default function SignUpScreen() {
       return;
     }
 
-    const sendResult = await signUp!.verifications.sendEmailCode();
+    const sendResult = await signUp.verifications.sendEmailCode();
     if (sendResult.error) {
       setErrors({
         email: sendResult.error.message ?? "",
@@ -60,14 +67,14 @@ export default function SignUpScreen() {
   }
 
   async function handleVerify(code: string) {
-    const { error } = await signUp!.verifications.verifyEmailCode({ code });
+    if (!signUp) return false;
+    const { error } = await signUp.verifications.verifyEmailCode({ code });
     if (error) return false;
 
-    if (signUp!.status === "complete") {
-      await signUp!.finalize({
+    if (signUp.status === "complete") {
+      await signUp.finalize({
         navigate: ({ session, decorateUrl }) => {
           if (session?.currentTask) {
-            console.log(session.currentTask);
             return;
           }
           const url = decorateUrl("/");
@@ -79,7 +86,8 @@ export default function SignUpScreen() {
   }
 
   async function handleResend() {
-    const { error } = await signUp!.verifications.sendEmailCode();
+    if (!signUp) throw new Error("Authentication not ready. Please try again.");
+    const { error } = await signUp.verifications.sendEmailCode();
     if (error) throw new Error(error.message ?? "Failed to resend code");
   }
 
@@ -88,14 +96,12 @@ export default function SignUpScreen() {
     setGoogleLoading(true);
     try {
       const redirectUrl = Linking.createURL("oauth-callback");
-      console.log("[Google SSO] redirectUrl:", redirectUrl);
       const { createdSessionId, setActive: setSSOSession } = await startSSOFlow(
         {
           strategy: "oauth_google",
           redirectUrl,
         },
       );
-      console.log("[Google SSO] createdSessionId:", createdSessionId);
       if (createdSessionId) {
         await setSSOSession!({ session: createdSessionId });
         router.replace("/");

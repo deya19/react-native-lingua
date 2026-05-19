@@ -21,7 +21,7 @@ export default function HomeScreen() {
           {user.emailAddresses[0]?.emailAddress ?? user.id}
         </Text>
         <TouchableOpacity
-          style={styles.signOutBtn}
+          className="bg-lingua-purple px-8 py-4 rounded-[14px]"
           activeOpacity={0.85}
           onPress={() => signOut()}
         >
@@ -38,11 +38,5 @@ const styles = StyleSheet.create({
   safe: {
     flex: 1,
     backgroundColor: "#ffffff",
-  },
-  signOutBtn: {
-    backgroundColor: "#6c4ef5",
-    paddingHorizontal: 32,
-    paddingVertical: 16,
-    borderRadius: 14,
   },
 });

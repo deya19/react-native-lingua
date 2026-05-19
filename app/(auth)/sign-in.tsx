@@ -89,14 +89,12 @@ export default function SignInScreen() {
     setGoogleLoading(true);
     try {
       const redirectUrl = Linking.createURL("oauth-callback");
-      console.log("[Google SSO] redirectUrl:", redirectUrl);
       const { createdSessionId, setActive: setSSOSession } = await startSSOFlow(
         {
           strategy: "oauth_google",
           redirectUrl,
         },
       );
-      console.log("[Google SSO] createdSessionId:", createdSessionId);
       if (createdSessionId) {
         await setSSOSession!({ session: createdSessionId });
         router.replace("/");
