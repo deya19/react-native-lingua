@@ -1,30 +1,42 @@
-import { router } from "expo-router";
+import { useClerk, useUser } from "@clerk/expo";
+import { Redirect } from "expo-router";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-export default function Index() {
+export default function HomeScreen() {
+  const { user } = useUser();
+  const { signOut } = useClerk();
+
+  if (!user) {
+    return <Redirect href="/onboarding" />;
+  }
+
   return (
-    <View className="flex-1 bg-background justify-center items-center px-6">
-      <Text className="h1 text-lingua-purple text-center mb-4">buolingo</Text>
-      <TouchableOpacity
-        style={styles.link}
-        onPress={() => router.push("/onboarding")}
-      >
-        <Text style={styles.linkText}>Go to Onboarding →</Text>
-      </TouchableOpacity>
-    </View>
+    <SafeAreaView style={styles.safe}>
+      <View className="flex-1 bg-background px-6 justify-center items-center">
+        <Text className="text-[28px] font-[Poppins-Bold] text-text-primary mb-2">
+          Welcome! 🎉
+        </Text>
+        <Text className="body-medium text-text-secondary mb-8">
+          {user.emailAddresses[0]?.emailAddress ?? user.id}
+        </Text>
+        <TouchableOpacity
+          className="bg-lingua-purple px-8 py-4 rounded-[14px]"
+          activeOpacity={0.85}
+          onPress={() => signOut()}
+        >
+          <Text className="text-[16px] font-[Poppins-SemiBold] text-white">
+            Sign Out
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  link: {
-    backgroundColor: "#6c4ef5",
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-    borderRadius: 14,
-  },
-  linkText: {
-    fontFamily: "Poppins-SemiBold",
-    fontSize: 16,
-    color: "#ffffff",
+  safe: {
+    flex: 1,
+    backgroundColor: "#ffffff",
   },
 });

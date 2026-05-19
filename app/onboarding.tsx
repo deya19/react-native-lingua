@@ -1,9 +1,16 @@
 import { images } from "@/constants/images";
-import { router } from "expo-router";
+import { useAuth } from "@clerk/expo";
+import { Redirect, router } from "expo-router";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function OnboardingScreen() {
+  const { isSignedIn, isLoaded } = useAuth();
+
+  if (isLoaded && isSignedIn) {
+    return <Redirect href="/" />;
+  }
+
   return (
     <SafeAreaView style={styles.safe}>
       <View className="flex-1 bg-background px-6">
