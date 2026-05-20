@@ -16,8 +16,22 @@ const LESSON_TITLES = [
 ];
 
 export default function LessonDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const lesson = lessons.find((item) => item.id === id);
+  const { id } = useLocalSearchParams<{ id?: string | string[] }>();
+  const lessonId = Array.isArray(id) ? id[0] : id;
+  const lesson = lessons.find((item) => item.id === lessonId);
+
+  if (!lesson) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <View className="flex-1 items-center justify-center bg-white px-6">
+          <Text className="text-center font-[Poppins-SemiBold] text-[16px] text-[`#11182F`]">
+            Lesson not found.
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
   const title = lesson
     ? (LESSON_TITLES[lesson.order - 1] ?? lesson.title)
     : "Lesson";
@@ -64,7 +78,7 @@ export default function LessonDetailScreen() {
           </TouchableOpacity>
           <View className="mr-[8px] h-[39px] w-[39px] items-center justify-center rounded-full border border-[#E6E8F0] bg-[#FAFBFF]">
             <Text className="font-[Poppins-SemiBold] text-[16px] text-[#11182F]">
-              {lesson?.order ?? 12}
+              {lesson.order}
             </Text>
           </View>
           <TouchableOpacity
@@ -181,37 +195,37 @@ export default function LessonDetailScreen() {
           <View className="absolute bottom-[24px] left-[15px] right-[15px] h-[123px] flex-row rounded-[16px] bg-white px-[20px] py-[24px]">
             <View className="flex-1">
               <Text
-                className="font-[Poppins-Bold] text-[14px] text-[#11182F]"
+                className="font-[Poppins-Bold] text-[12px] text-[#11182F]"
                 numberOfLines={1}
               >
                 Speaking
               </Text>
-              <Text className="mt-[13px] font-[Poppins-Bold] text-[14px] text-[#58D446]">
+              <Text className="mt-[13px] font-[Poppins-Bold] text-[12px] text-[#58D446]">
                 Excellent
               </Text>
             </View>
             <View className="mx-[12px] h-[66px] w-px bg-[#E4E7F0]" />
             <View className="flex-1">
               <Text
-                className="font-[Poppins-Bold] text-[14px] text-[#11182F]"
+                className="font-[Poppins-Bold] text-[12px] text-[#11182F]"
                 numberOfLines={1}
                 adjustsFontSizeToFit
               >
                 Pronunciation
               </Text>
-              <Text className="mt-[13px] font-[Poppins-Bold] text-[14px] text-[#3289FF]">
+              <Text className="mt-[13px] font-[Poppins-Bold] text-[12px] text-[#3289FF]">
                 Great
               </Text>
             </View>
             <View className="mx-[12px] h-[66px] w-px bg-[#E4E7F0]" />
             <View className="flex-1">
               <Text
-                className="font-[Poppins-Bold] text-[14px] text-[#11182F]"
+                className="font-[Poppins-Bold] text-[12px] text-[#11182F]"
                 numberOfLines={1}
               >
                 Grammar
               </Text>
-              <Text className="mt-[13px] font-[Poppins-Bold] text-[14px] text-[#5D45FF]">
+              <Text className="mt-[13px] font-[Poppins-Bold] text-[12px] text-[#5D45FF]">
                 Good
               </Text>
             </View>

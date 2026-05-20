@@ -157,19 +157,21 @@ export default function LearnTab() {
             const isActive = status === "in_progress";
 
             return (
-              <TouchableOpacity
+            <TouchableOpacity
                 key={lesson.id}
-                className={`min-h-[78px] rounded-[16px] border bg-white px-[18px] py-[14px] ${
-                  isActive ? "border-[#A78BFF]" : "border-[#F0F1F6]"
+                disabled={status === "locked"}
+                className={`min-h-[78px] rounded-lingua-lg border bg-white px-[18px] py-[14px] ${
+                  isActive ? "border-[`#A78BFF`]" : "border-[`#F0F1F6`]"
                 }`}
                 style={isActive ? styles.activeCard : styles.cardShadow}
                 activeOpacity={0.82}
-                onPress={() =>
+                onPress={() => {
+                  if (status === "locked") return;
                   router.push({
                     pathname: "/lesson/[id]",
                     params: { id: lesson.id },
-                  })
-                }
+                  });
+                }}
               >
                 <View className="flex-row items-center">
                   <View className="flex-1">
