@@ -1,4 +1,97 @@
-import type { Lesson } from "@/types/learning";
+import type { LanguageCode, Lesson } from "@/types/learning";
+
+type SupplementalLessonGroup = {
+  languageCode: LanguageCode;
+  unitId: string;
+  idPrefix: string;
+  startOrder: number;
+  titles: string[];
+};
+
+function buildSupplementalLessons({
+  languageCode,
+  unitId,
+  idPrefix,
+  startOrder,
+  titles,
+}: SupplementalLessonGroup): Lesson[] {
+  return titles.map((title, index) => {
+    const order = startOrder + index;
+    const id = `${idPrefix}-${order}`;
+    const topic = title.toLowerCase();
+
+    return {
+      id,
+      unitId,
+      languageCode,
+      title,
+      description: `Practice useful phrases for ${topic}.`,
+      order,
+      xpReward: 15 + order * 5,
+      goals: [
+        {
+          id: `g-${id}-1`,
+          description: `Recognize common words for ${topic}`,
+        },
+        {
+          id: `g-${id}-2`,
+          description: `Use a simple phrase about ${topic}`,
+        },
+      ],
+      activities: [
+        {
+          id: `a-${id}-1`,
+          type: "multiple_choice",
+          question: `Which topic are you practicing?`,
+          options: [title, "Numbers", "Weather", "Colors"],
+          correctAnswer: title,
+        },
+        {
+          id: `a-${id}-2`,
+          type: "translation",
+          question: `Translate a useful phrase for ${title}.`,
+          correctAnswer: `A ${topic} phrase.`,
+        },
+        {
+          id: `a-${id}-3`,
+          type: "fill_blank",
+          question: `Complete the ${topic} sentence.`,
+          options: ["hello", "please", "thanks", "goodbye"],
+          correctAnswer: "please",
+        },
+      ],
+      vocabulary: [
+        {
+          id: `v-${id}-1`,
+          word: title,
+          translation: title,
+          exampleSentence: `Let's practice ${topic}.`,
+        },
+        {
+          id: `v-${id}-2`,
+          word: "please",
+          translation: "please",
+          exampleSentence: "Please help me practice.",
+        },
+      ],
+      phrases: [
+        {
+          id: `p-${id}-1`,
+          text: `I want to practice ${topic}.`,
+          translation: `I want to practice ${topic}.`,
+          context: title,
+        },
+      ],
+      aiTeacherPrompt: {
+        lessonId: id,
+        introScript: `Welcome back! Today we will practice ${topic}.`,
+        explanationScript: `This lesson teaches friendly phrases you can use when talking about ${topic}.`,
+        practiceScript: `Repeat after me and try using the new ${topic} phrase.`,
+        closingScript: `Great work practicing ${topic}.`,
+      },
+    };
+  });
+}
 
 export const lessons: Lesson[] = [
   // English — Unit 1: Basics 1
@@ -493,4 +586,68 @@ export const lessons: Lesson[] = [
         "よくできました！あなたは今、最初の日本語の単語を学びました。毎日練習してください。",
     },
   },
+  ...buildSupplementalLessons({
+    languageCode: "en",
+    unitId: "unit-en-1",
+    idPrefix: "lesson-en-1",
+    startOrder: 3,
+    titles: [
+      "At the Café",
+      "Travel & Directions",
+      "Shopping",
+      "Family & Friends",
+    ],
+  }),
+  ...buildSupplementalLessons({
+    languageCode: "es",
+    unitId: "unit-es-1",
+    idPrefix: "lesson-es-1",
+    startOrder: 2,
+    titles: [
+      "Daily Life",
+      "At the Café",
+      "Travel & Directions",
+      "Shopping",
+      "Family & Friends",
+    ],
+  }),
+  ...buildSupplementalLessons({
+    languageCode: "fr",
+    unitId: "unit-fr-1",
+    idPrefix: "lesson-fr-1",
+    startOrder: 2,
+    titles: [
+      "Daily Life",
+      "At the Café",
+      "Travel & Directions",
+      "Shopping",
+      "Family & Friends",
+    ],
+  }),
+  ...buildSupplementalLessons({
+    languageCode: "de",
+    unitId: "unit-de-1",
+    idPrefix: "lesson-de-1",
+    startOrder: 2,
+    titles: [
+      "Daily Life",
+      "At the Café",
+      "Travel & Directions",
+      "Shopping",
+      "Family & Friends",
+    ],
+  }),
+  ...buildSupplementalLessons({
+    languageCode: "ja",
+    unitId: "unit-ja-1",
+    idPrefix: "lesson-ja-1",
+    startOrder: 2,
+    titles: [
+      "Daily Life",
+      "At the Café",
+      "Travel & Directions",
+      "Shopping",
+      "Family & Friends",
+    ],
+  }),
 ];
