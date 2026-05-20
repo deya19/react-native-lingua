@@ -4,8 +4,10 @@ import { Redirect } from "expo-router";
 import { useLanguageStore } from "@/store/languageStore";
 
 export default function HomeScreen() {
-  const { user } = useUser();
+  const { user, isLoaded } = useUser();
   const selectedLanguage = useLanguageStore((s) => s.selectedLanguage);
+
+  if (!isLoaded) return null;
 
   if (!user) {
     return <Redirect href="/onboarding" />;
@@ -15,5 +17,5 @@ export default function HomeScreen() {
     return <Redirect href="/language-selection" />;
   }
 
-  return <Redirect href={"/(tabs)" as any} />;
+  return <Redirect href="/(tabs)" />;
 }

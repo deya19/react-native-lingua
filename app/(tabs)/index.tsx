@@ -4,6 +4,7 @@ import { lessons } from "@/data/lessons";
 import { units } from "@/data/units";
 import { useLanguageStore } from "@/store/languageStore";
 import { useUser } from "@clerk/expo";
+import type { ReactNode } from "react";
 import {
   Feather,
   FontAwesome5,
@@ -197,7 +198,7 @@ function PlanRow({
   title: string;
   subtitle: string;
   iconClassName: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
   complete?: boolean;
   showDivider?: boolean;
 }) {

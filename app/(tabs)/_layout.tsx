@@ -1,12 +1,13 @@
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { Tabs } from "expo-router";
 import { useEffect, useRef } from "react";
 import {
-    Animated,
-    Dimensions,
-    StyleSheet,
-    TouchableOpacity,
-    View,
+  Animated,
+  Dimensions,
+  StyleSheet,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -126,12 +127,24 @@ function TabButton({
   );
 }
 
-function CustomTabBar({ state, descriptors, navigation }: any) {
+function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const animatedIndex = useRef(new Animated.Value(state.index)).current;
   const debounceRef = useRef(false);
 
-  const onTabPress = (index: number, route: any, isFocused: boolean) => {
+  useEffect(() => {
+    Animated.timing(animatedIndex, {
+      toValue: state.index,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  }, [state.index, animatedIndex]);
+
+  const onTabPress = (
+    index: number,
+    route: (typeof state.routes)[number],
+    isFocused: boolean,
+  ) => {
     if (debounceRef.current) return;
 
     const event = navigation.emit({
@@ -160,35 +173,40 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
   });
 
   return (
-    <View style={[styles.container, { paddingBottom: insets.bottom || 10 }]}>
+    <View
+      className="flex-row bg-white rounded-tl-[28px] rounded-tr-[28px] pt-3"
+      style={[styles.containerShadow, { paddingBottom: insets.bottom || 10 }]}
+    >
       <Animated.View
         style={[
           styles.activeCircle,
           { transform: [{ translateX: indicatorTranslateX }] },
         ]}
       />
-      {state.routes.map((route: any, index: number) => {
-        const { options } = descriptors[route.key];
-        const isFocused = state.index === index;
-        const tab = tabConfigs.find((t) => t.name === route.name);
-        if (!tab) return null;
+      {state.routes.map(
+        (route: (typeof state.routes)[number], index: number) => {
+          const { options } = descriptors[route.key];
+          const isFocused = state.index === index;
+          const tab = tabConfigs.find((t) => t.name === route.name);
+          if (!tab) return null;
 
-        const color = isFocused ? "#ffffff" : GRAY;
-        const labelColor = isFocused ? PURPLE : GRAY;
+          const color = isFocused ? "#ffffff" : GRAY;
+          const labelColor = isFocused ? PURPLE : GRAY;
 
-        return (
-          <TabButton
-            key={route.key}
-            isFocused={isFocused}
-            onPress={() => onTabPress(index, route, isFocused)}
-            color={color}
-            labelColor={labelColor}
-            tab={tab}
-            accessibilityState={isFocused ? { selected: true } : {}}
-            accessibilityLabel={options.tabBarAccessibilityLabel}
-          />
-        );
-      })}
+          return (
+            <TabButton
+              key={route.key}
+              isFocused={isFocused}
+              onPress={() => onTabPress(index, route, isFocused)}
+              color={color}
+              labelColor={labelColor}
+              tab={tab}
+              accessibilityState={isFocused ? { selected: true } : {}}
+              accessibilityLabel={options.tabBarAccessibilityLabel}
+            />
+          );
+        },
+      )}
     </View>
   );
 }
@@ -211,12 +229,7 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flexDirection: "row",
-    backgroundColor: "#ffffff",
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    paddingTop: 12,
+  containerShadow: {
     shadowColor: "#D4D9EA",
     shadowOffset: { width: 0, height: -8 },
     shadowOpacity: 0.28,
