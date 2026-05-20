@@ -1,4 +1,5 @@
 import { images } from "@/constants/images";
+import { AnalyticsEvents, track } from "@/lib/analytics";
 import { useAuth } from "@clerk/expo";
 import { Redirect, router } from "expo-router";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -86,7 +87,10 @@ export default function OnboardingScreen() {
           <TouchableOpacity
             className="bg-lingua-purple rounded-[18px] py-[18px] flex-row items-center justify-center gap-2"
             activeOpacity={0.85}
-            onPress={() => router.push("/(auth)/sign-up")}
+            onPress={() => {
+              track(AnalyticsEvents.onboarding_get_started_tapped);
+              router.push("/(auth)/sign-up");
+            }}
           >
             <Text className="text-[17px] font-[Poppins-SemiBold] text-white">
               Get Started

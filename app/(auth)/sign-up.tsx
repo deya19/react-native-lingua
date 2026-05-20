@@ -1,19 +1,20 @@
 import SocialButton from "@/components/SocialButton";
 import VerificationModal from "@/components/VerificationModal";
 import { images } from "@/constants/images";
+import { AnalyticsEvents, track } from "@/lib/analytics";
 import { useSignUp, useSSO } from "@clerk/expo";
 import * as Linking from "expo-linking";
 import type { Href } from "expo-router";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Image,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -63,6 +64,7 @@ export default function SignUpScreen() {
       return;
     }
 
+    track(AnalyticsEvents.sign_up_submitted);
     setModalVisible(true);
   }
 
@@ -81,6 +83,7 @@ export default function SignUpScreen() {
           router.replace(url as Href);
         },
       });
+      track(AnalyticsEvents.sign_up_completed);
     }
     return true;
   }
@@ -93,6 +96,7 @@ export default function SignUpScreen() {
 
   async function handleGoogle() {
     if (googleLoading) return;
+    track(AnalyticsEvents.sign_up_sso_started, { provider: "google" });
     setGoogleLoading(true);
     try {
       const redirectUrl = Linking.createURL("oauth-callback");
@@ -115,6 +119,7 @@ export default function SignUpScreen() {
 
   async function handleFacebook() {
     if (facebookLoading) return;
+    track(AnalyticsEvents.sign_up_sso_started, { provider: "facebook" });
     setFacebookLoading(true);
     try {
       const redirectUrl = Linking.createURL("oauth-callback");
@@ -137,6 +142,7 @@ export default function SignUpScreen() {
 
   async function handleApple() {
     if (appleLoading) return;
+    track(AnalyticsEvents.sign_up_sso_started, { provider: "apple" });
     setAppleLoading(true);
     try {
       const redirectUrl = Linking.createURL("oauth-callback");

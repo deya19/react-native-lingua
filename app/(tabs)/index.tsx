@@ -2,14 +2,14 @@ import { images } from "@/constants/images";
 import { languages } from "@/data/languages";
 import { lessons } from "@/data/lessons";
 import { units } from "@/data/units";
+import { AnalyticsEvents, track } from "@/lib/analytics";
 import { useLanguageStore } from "@/store/languageStore";
 import { useUser } from "@clerk/expo";
-import type { ReactNode } from "react";
 import {
   Feather,
-  FontAwesome5,
-  MaterialCommunityIcons,
+  MaterialCommunityIcons
 } from "@expo/vector-icons";
+import type { ReactNode } from "react";
 import {
   Image,
   ScrollView,
@@ -104,6 +104,7 @@ export default function HomeTab() {
             <TouchableOpacity
               className="h-12 w-28 items-center justify-center rounded-[14px] bg-white"
               activeOpacity={0.85}
+              onPress={() => track(AnalyticsEvents.continue_learning_tapped)}
             >
               <Text className="font-[Poppins-Bold] text-[12px] text-[#6C4EF5]">
                 Continue
