@@ -1,5 +1,6 @@
 import { images } from "@/constants/images";
 import { languages } from "@/data/languages";
+import { useLanguageStore } from "@/store/languageStore";
 import type { LanguageCode } from "@/types/learning";
 import { Stack, router } from "expo-router";
 import { useState } from "react";
@@ -17,6 +18,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function LanguageSelectionScreen() {
   const [selected, setSelected] = useState<LanguageCode>("es");
   const [search, setSearch] = useState("");
+  const setSelectedLanguage = useLanguageStore((s) => s.setSelectedLanguage);
 
   const filtered = languages.filter(
     (lang) =>
@@ -89,7 +91,10 @@ export default function LanguageSelectionScreen() {
                       className="w-12 h-12 rounded-full items-center justify-center mr-4"
                       style={{ backgroundColor: lang.color + "20" }}
                     >
-                      <Text className="text-heading-2">{lang.flag}</Text>
+                      <Image
+                        source={{ uri: lang.flag }}
+                        className="h-12 w-12 rounded-full"
+                      />
                     </View>
 
                     {/* Name & learners */}
@@ -127,8 +132,8 @@ export default function LanguageSelectionScreen() {
               className="bg-lingua-purple py-4 rounded-lingua-lg items-center"
               activeOpacity={0.85}
               onPress={() => {
-                // TODO: save selected language to store
-                router.back();
+                setSelectedLanguage(selected);
+                router.replace("/");
               }}
             >
               <Text className="text-[16px] font-[Poppins-SemiBold] text-white">
@@ -138,7 +143,7 @@ export default function LanguageSelectionScreen() {
           </View>
 
           {/* Earth illustration */}
-          <View className="items-center -mt-12">
+          <View className="items-center -mt-12" pointerEvents="none">
             <Image
               source={images.earth}
               className="w-[600px] h-[360px]"

@@ -1,4 +1,4 @@
-export type LanguageCode = "en" | "es" | "fr" | "de" | "ja" | "ko" | "zh";
+export type LanguageCode = "en" | "es" | "fr" | "de" | "ja";
 
 export interface Language {
   code: LanguageCode;
@@ -7,6 +7,7 @@ export interface Language {
   flag: string;
   color: string;
   learners: string;
+  greeting: string;
 }
 
 export type ActivityType =
