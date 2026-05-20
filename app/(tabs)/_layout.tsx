@@ -1,3 +1,4 @@
+import { AnalyticsEvents, track } from "@/lib/analytics";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { Tabs } from "expo-router";
@@ -161,6 +162,12 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
         useNativeDriver: true,
       }).start();
       navigation.navigate(route.name);
+      if (route.name === "ai-teacher") {
+        track(AnalyticsEvents.ai_teacher_viewed);
+      }
+      if (route.name === "chat") {
+        track(AnalyticsEvents.chat_viewed);
+      }
       setTimeout(() => {
         debounceRef.current = false;
       }, 300);

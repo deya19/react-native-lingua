@@ -1,19 +1,20 @@
 import SocialButton from "@/components/SocialButton";
 import VerificationModal from "@/components/VerificationModal";
 import { images } from "@/constants/images";
+import { AnalyticsEvents, track } from "@/lib/analytics";
 import { useSSO } from "@clerk/expo";
 import { useSignIn } from "@clerk/expo/legacy";
 import * as Linking from "expo-linking";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Image,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -46,6 +47,7 @@ export default function SignInScreen() {
           (f) => f.strategy === "email_code",
         )!.emailAddressId!,
       });
+      track(AnalyticsEvents.sign_in_submitted);
       setModalVisible(true);
     } catch (err: any) {
       setEmailError(err?.errors?.[0]?.message ?? "Something went wrong.");
@@ -63,6 +65,7 @@ export default function SignInScreen() {
       });
       if (result.status === "complete") {
         await setActive!({ session: result.createdSessionId });
+        track(AnalyticsEvents.sign_in_completed);
         router.replace("/");
         return true;
       }
@@ -86,6 +89,7 @@ export default function SignInScreen() {
 
   async function handleGoogle() {
     if (googleLoading) return;
+    track(AnalyticsEvents.sign_in_sso_started, { provider: "google" });
     setGoogleLoading(true);
     try {
       const redirectUrl = Linking.createURL("oauth-callback");
@@ -108,6 +112,7 @@ export default function SignInScreen() {
 
   async function handleFacebook() {
     if (facebookLoading) return;
+    track(AnalyticsEvents.sign_in_sso_started, { provider: "facebook" });
     setFacebookLoading(true);
     try {
       const redirectUrl = Linking.createURL("oauth-callback");
@@ -130,6 +135,7 @@ export default function SignInScreen() {
 
   async function handleApple() {
     if (appleLoading) return;
+    track(AnalyticsEvents.sign_in_sso_started, { provider: "apple" });
     setAppleLoading(true);
     try {
       const redirectUrl = Linking.createURL("oauth-callback");

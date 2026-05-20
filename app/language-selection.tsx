@@ -1,17 +1,18 @@
 import { images } from "@/constants/images";
 import { languages } from "@/data/languages";
+import { AnalyticsEvents, track } from "@/lib/analytics";
 import { useLanguageStore } from "@/store/languageStore";
 import type { LanguageCode } from "@/types/learning";
 import { Stack, router } from "expo-router";
 import { useState } from "react";
 import {
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Image,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -132,6 +133,9 @@ export default function LanguageSelectionScreen() {
               className="bg-lingua-purple py-4 rounded-lingua-lg items-center"
               activeOpacity={0.85}
               onPress={() => {
+                track(AnalyticsEvents.language_selected, {
+                  language_code: selected,
+                });
                 setSelectedLanguage(selected);
                 router.replace("/");
               }}
