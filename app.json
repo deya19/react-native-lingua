@@ -30,6 +30,15 @@
       "expo-router",
       "expo-secure-store",
       "@clerk/expo",
+      "@config-plugins/react-native-webrtc",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 24
+          }
+        }
+      ],
       [
         "expo-font",
         {
