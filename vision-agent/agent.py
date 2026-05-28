@@ -88,7 +88,7 @@ async def _run_agent_session(call_id: str, call_type: str, target_language: str)
     """Async helper to run a single agent session."""
     agent = create_teacher_agent(target_language)
     print(f"Joining call: type={call_type}, id={call_id}, language={target_language}")
-    call = agent.create_call(call_type, call_id)
+    call = await agent.create_call(call_type, call_id)
     async with agent.join(call):
         await agent.finish()
 
@@ -99,29 +99,71 @@ def run_console(call_id: str, call_type: str, target_language: str) -> None:
 
 
 def run_server(host: str, port: int, target_language: str) -> None:
-    """Start the HTTP server that spawns agents on demand."""
+    """Start a FastAPI HTTP server that spawns agents on demand."""
 
     try:
-        from vision_agents.core import AgentLauncher, Runner
+        from fastapi import FastAPI
+        from pydantic import BaseModel
+        import uvicorn
     except ImportError as exc:
-        print("Error: vision-agents package is not installed.")
-        print("Install it with:  pip install 'vision-agents[getstream,openai]' python-dotenv")
+        print("Error: fastapi/uvicorn is not installed.")
+        print("Install it with:  pip install fastapi uvicorn")
         raise SystemExit(1) from exc
 
-    # Factory function to create a fresh agent for each session
-    def _create_agent():
-        return create_teacher_agent(target_language)
+    app = FastAPI(title="Buolingo Agent Server")
 
-    # Coroutine to join a call with the agent
-    async def _join_call(agent, call_type: str, call_id: str):
-        call = agent.create_call(call_type, call_id)
-        async with agent.join(call):
-            await agent.finish()
+    active_sessions: dict[str, asyncio.Task] = {}
 
-    launcher = AgentLauncher(create_agent=_create_agent, join_call=_join_call)
-    runner = Runner(launcher)
-    print(f"Starting server on http://{host}:{port}")
-    runner.serve(host=host, port=port)
+    class StartSessionRequest(BaseModel):
+        call_id: str
+        call_type: str = "default"
+
+    class StartSessionResponse(BaseModel):
+        session_id: str
+        status: str
+
+    @app.post("/sessions", response_model=StartSessionResponse)
+    async def start_session(body: StartSessionRequest):
+        print(f"[SESSION START] call_id={body.call_id}, call_type={body.call_type}")
+        session_id = f"session-{body.call_id}-{asyncio.get_event_loop().time()}"
+
+        async def _session():
+            try:
+                print(f"[SESSION] Creating agent for {body.call_id}...")
+                agent = create_teacher_agent(target_language)
+                call = await agent.create_call(body.call_type, body.call_id)
+                async with agent.join(call):
+                    print(f"[SESSION] Agent joined call {body.call_id}")
+                    await agent.finish()
+                    print(f"[SESSION] Agent finished")
+            except Exception as e:
+                print(f"[SESSION] Error: {e}")
+            finally:
+                active_sessions.pop(session_id, None)
+
+        task = asyncio.create_task(_session())
+        active_sessions[session_id] = task
+        return StartSessionResponse(session_id=session_id, status="started")
+
+    @app.delete("/sessions/{session_id}")
+    async def stop_session(session_id: str):
+        print(f"[SESSION STOP] {session_id}")
+        task = active_sessions.pop(session_id, None)
+        if task:
+            task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
+            return {"status": "stopped"}
+        return {"status": "not_found"}
+
+    @app.get("/health")
+    async def health():
+        return {"status": "ok", "sessions": len(active_sessions)}
+
+    print(f"Starting Buolingo agent server on http://{host}:{port}")
+    uvicorn.run(app, host=host, port=port)
 
 
 # ---------------------------------------------------------------------------

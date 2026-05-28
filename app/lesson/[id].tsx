@@ -34,6 +34,8 @@ type CallLifecycleState =
   | "error"
   | "ended";
 
+type AgentStatus = "idle" | "connecting" | "connected" | "failed";
+
 function CallControls({
   onEndCall,
   callLifecycle,
@@ -120,6 +122,8 @@ export default function LessonDetailScreen() {
   const [callLifecycle, setCallLifecycle] =
     useState<CallLifecycleState>("idle");
   const [isMuted, setIsMuted] = useState(false);
+  const [agentStatus, setAgentStatus] = useState<AgentStatus>("idle");
+  const [agentSessionId, setAgentSessionId] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -163,6 +167,7 @@ export default function LessonDetailScreen() {
         if (mounted) {
           setCallLifecycle("joined");
           setIsMuted(false);
+          startAgent(callId, callType);
         }
       } catch (e) {
         console.error("Stream setup error:", e);
@@ -176,11 +181,52 @@ export default function LessonDetailScreen() {
 
     return () => {
       mounted = false;
+      stopAgent();
       call?.leave().catch(() => {});
       client?.disconnectUser().catch(() => {});
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lessonId, user?.id]);
+
+  const startAgent = async (callId: string, callType: string) => {
+    setAgentStatus("connecting");
+    try {
+      const res = await fetch("/api/agent-start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ callId, callType }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setAgentSessionId(data.session_id ?? null);
+        setAgentStatus("connected");
+      } else {
+        const errorText = await res.text().catch(() => "unknown");
+        console.error("Agent start failed:", res.status, errorText);
+        setAgentStatus("failed");
+      }
+    } catch (err) {
+      console.error("Agent start error:", err);
+      setAgentStatus("failed");
+    }
+  };
+
+  const stopAgent = async () => {
+    if (agentSessionId) {
+      try {
+        await fetch("/api/agent-stop", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId: agentSessionId }),
+        });
+      } catch {
+        // ignore
+      }
+    }
+    setAgentStatus("idle");
+    setAgentSessionId(null);
+  };
 
   const handleToggleMute = async () => {
     if (!call) return;
@@ -198,6 +244,7 @@ export default function LessonDetailScreen() {
 
   const handleEndCall = async () => {
     setCallLifecycle("ended");
+    await stopAgent();
     try {
       await call?.leave();
     } catch {
@@ -237,7 +284,11 @@ export default function LessonDetailScreen() {
 
   const statusColor =
     callLifecycle === "joined"
-      ? "#62D84E"
+      ? agentStatus === "failed"
+        ? "#FB4742"
+        : agentStatus === "connecting"
+          ? "#F5A623"
+          : "#62D84E"
       : callLifecycle === "error"
         ? "#FB4742"
         : callLifecycle === "connecting" || callLifecycle === "loading"
@@ -246,7 +297,13 @@ export default function LessonDetailScreen() {
 
   const statusText =
     callLifecycle === "joined"
-      ? "Online"
+      ? agentStatus === "connected"
+        ? "Teacher online"
+        : agentStatus === "connecting"
+          ? "Teacher joining..."
+          : agentStatus === "failed"
+            ? "Teacher unavailable"
+            : "Online"
       : callLifecycle === "error"
         ? "Error"
         : callLifecycle === "connecting"
